@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f4f6f2">
+  <meta name="description" content="用月薪和工作日历换算每小时收入，把每一份努力变成离愿望更近的进度。">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <title>上班鼓励器 · 离想要的生活更近一点</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="上班鼓励器首页"><span class="brand-mark">¥</span><span>上班鼓励器</span></a>
+      <nav class="top-actions" aria-label="应用操作">
+        <button class="quiet-button" id="installButton" type="button" hidden>安装 App</button>
+        <a class="quiet-button" id="downloadButton" href="https://github.com/Joynary/work-cheer/releases/latest/download/work-cheer.zip">下载软件</a>
+        <a class="quiet-button" href="https://github.com/Joynary/work-cheer">GitHub</a>
+        <button class="icon-button" id="settingsToggle" type="button" aria-label="展开工作设置" title="工作设置">设置</button>
+      </nav>
+    </header>
+
+    <section class="intro">
+      <div>
+        <p class="eyebrow">把工资换算成愿望的进度</p>
+        <h1>每一份努力，都离想要的生活近一点。</h1>
+        <p class="intro-copy">按你的月薪、班次和休息日计算；数据只保存在这台设备。</p>
+      </div>
+      <time class="date-chip" id="todayDate"></time>
+    </section>
+
+    <section class="settings-band" id="settingsPanel" aria-labelledby="settingsTitle">
+      <div class="section-heading"><div><p class="eyebrow">收入设置</p><h2 id="settingsTitle">先告诉我你的工作安排</h2></div><button class="text-button" id="collapseSettings" type="button">收起</button></div>
+      <div class="settings-grid">
+        <div class="field"><label for="monthlySalary">月薪（税前或税后，按你习惯）</label><div class="input-with-prefix"><span>¥</span><input id="monthlySalary" type="number" min="0" max="10000000" step="100" inputmode="decimal" value="10000"></div></div>
+        <div class="field"><label for="scheduleMode">休息安排</label><select id="scheduleMode"><option value="monthly-days">按每月工作天数计算</option><option value="double-rest">双休（周一至周五上班）</option><option value="alternating">大小周（大周单休、小周双休）</option></select></div>
+        <div class="field" id="workdaysField"><label for="monthlyWorkdays">每月工作天数</label><div class="input-with-suffix"><input id="monthlyWorkdays" type="number" min="1" max="31" step="0.25" inputmode="decimal" value="21.75"><span>天</span></div></div>
+        <div class="field"><label for="shiftStart">上班时间</label><input id="shiftStart" type="time" value="09:00"></div>
+        <div class="field"><label for="shiftEnd">下班时间</label><input id="shiftEnd" type="time" value="18:00"></div>
+        <div class="field"><label for="breakMinutes">午休 / 不计薪休息</label><div class="input-with-suffix"><input id="breakMinutes" type="number" min="0" max="600" step="5" inputmode="numeric" value="60"><span>分钟</span></div></div>
+      </div>
+      <div class="schedule-extra" id="alternatingFields" hidden>
+        <div class="field"><label for="anchorDate">大小周参照周（选该周的周一）</label><input id="anchorDate" type="date"></div>
+        <div class="field"><label for="anchorWeekType">参照周属于</label><select id="anchorWeekType"><option value="big">大周（周一至周六上班）</option><option value="small">小周（周一至周五上班）</option></select></div>
+        <p class="field-help">从参照周开始每周交替。周历按周一到周日计算，可调整参照周来匹配你的实际排班。</p>
+      </div>
+      <div class="settings-footer"><label class="check-row" id="todayWorkdayRow"><input id="todayWorkday" type="checkbox" checked><span>今天是工作日</span></label><div class="rate-result"><span>折算时薪</span><strong id="hourlyRate">¥0.00 / 小时</strong><span id="rateFormula"></span></div><button class="primary-button" id="saveSettings" type="button">保存设置</button></div>
+    </section>
+
+    <div class="dashboard-grid">
+      <section class="income-section" aria-labelledby="incomeTitle">
+        <div class="section-heading"><div><p class="eyebrow">今天的进度</p><h2 id="incomeTitle">时间正在为你累积</h2></div><span class="live-state"><i id="liveDot"></i><span id="liveLabel">今日工作日</span></span></div>
+        <div class="income-display"><div class="income-caption">今天已赚到（估算）</div><div class="income-amount"><span id="currencySymbol">¥</span><strong id="earned">0.00</strong></div><div class="income-rate"><span id="ratePerSecond">¥0.0000 / 秒</span><span class="separator-dot">·</span><span id="elapsed">00:00:00</span></div></div>
+        <div class="shift-progress"><div class="progress-heading"><span>今日班次</span><strong id="shiftProgressText">0%</strong></div><div class="progress-track"><span id="shiftProgressBar"></span></div><div class="progress-foot"><span id="workedTime">0小时 0分</span><span id="remainingTime">距离下班 --</span></div></div>
+        <div class="encouragement" id="encouragement" role="status" aria-live="polite"></div>
+        <div class="income-actions"><button class="reward-button" id="boostButton" type="button">给自己一点鼓励 ×2</button><button class="secondary-button" id="pauseButton" type="button">暂停计时</button></div>
+        <p class="disclaimer">双倍是情绪奖励显示，不会改变时薪或实际工资；估算不含税费、加班费和补贴。</p>
+      </section>
+
+      <section class="wishlist-section" aria-labelledby="wishlistTitle">
+        <div class="section-heading"><div><p class="eyebrow">给努力一个方向</p><h2 id="wishlistTitle">愿望清单</h2></div><span class="wish-count" id="wishCount">0 项</span></div>
+        <form class="wish-form" id="wishForm">
+          <div class="field"><label for="wishName">想买什么</label><input id="wishName" type="text" maxlength="80" placeholder="例如：降噪耳机" required></div>
+          <div class="wish-form-row"><div class="field"><label for="wishPrice">预算</label><div class="input-with-prefix"><span id="wishCurrency">¥</span><input id="wishPrice" type="number" min="0.01" max="100000000" step="0.01" inputmode="decimal" placeholder="0.00" required></div></div><button class="primary-button" type="submit">加入清单</button></div>
+        </form>
+        <div class="coach-box" id="wishCoach"><span class="coach-label">下一步</span><p>加一件想买的东西，看看还要工作多久。</p></div>
+        <ul class="wish-list" id="wishList" aria-live="polite"></ul>
+        <p class="empty-state" id="emptyWishlist">清单还空着。写下一个愿望，让今天的进度有个方向。</p>
+      </section>
+    </div>
+
+    <section class="install-band" aria-label="应用安装与下载">
+      <div><p class="eyebrow">随时打开</p><h2>装到手机或电脑，离线也能看。</h2><p id="installHelp">支持的浏览器可安装为 App；其他浏览器可从菜单选择“添加到主屏幕”。</p></div>
+      <div class="install-actions"><button class="secondary-button" id="installAction" type="button">安装到设备</button><a class="primary-button download-link" id="sourceDownload" href="https://github.com/Joynary/work-cheer/releases/latest/download/work-cheer.zip">下载软件包（ZIP）</a></div>
+    </section>
+    <footer class="footer"><span>仅本地保存，不上传工资和愿望清单。</span><span>上班鼓励器 · 收入和时间均为估算</span></footer>
+  </main>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
